@@ -24,7 +24,26 @@ myVertex::~myVertex(void)
 
 void myVertex::computeNormal()
 {
-	/**** TODO ****/
+	///**** TODO ****/
+    myVector3D SommeNormal(0.0, 0.0, 0.0);
+    int nbFace = 0;
+
+    myHalfedge* startEdge = this->originof;
+    myHalfedge* currentEdge = startEdge;
+
+    do {
+        if (currentEdge->adjacent_face != nullptr && currentEdge->adjacent_face->normal) {
+            SommeNormal += * currentEdge->adjacent_face->normal;
+            nbFace++;
+        }
+        currentEdge = currentEdge->twin->next; // Passe à l'arête suivante autour du sommet
+    } while (currentEdge != startEdge && currentEdge != nullptr);
+
+    if (nbFace > 0) {
+        SommeNormal = SommeNormal / static_cast<float>(nbFace); // Calcule la moyenne
+    }
+	SommeNormal.normalize(); // Normalisation
+	*this->normal = SommeNormal; // Affectation de la normale calculée
 }
 
 void myVertex::check() {

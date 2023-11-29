@@ -50,6 +50,7 @@ void menu(int item)
 		//for sphere 0.06
 		//m->allCollapse(0.06);
 		m->collapse(m->findMinimalHalfedge());
+		m->checkMesh();
 		//for each (myHalfedge* he in m->halfedges)
 		//{
 		//	if (distance(he->source->point, he->next->source->point) <= 0.06) {
@@ -69,6 +70,8 @@ void menu(int item)
 	case MENU_TRIANGULATE:
 		{
 			m->triangulate();
+			//m->testVertexHalfedge(m->vertices,m->halfedges,m->faces);
+			m->checkMesh();
 			m->computeNormals();
 			makeBuffers(m);
 			break;
@@ -178,6 +181,7 @@ void menu(int item)
 			m->readFile(outPath);
 			m->computeNormals();
 			makeBuffers(m);
+
 			break;
 	    }
 	case MENU_EXIT:

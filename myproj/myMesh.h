@@ -13,6 +13,7 @@ public:
 	std::vector<myFace *> faces;
 	std::string name;
 
+	void testVertexHalfedge(const std::vector<myVertex*> verts, const std::vector<myHalfedge*> halfs, const std::vector<myFace*> fs);
 	void checkMesh();
 	bool readFile(std::string filename);
 	void computeNormals();

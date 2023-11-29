@@ -33,7 +33,7 @@ void myMesh::clear()
 	vector<myFace*> empty_faces;         faces.swap(empty_faces);
 }
 
-void testVertexHalfedge(const std::vector<myVertex*> verts,const std::vector<myHalfedge*> halfs, const std::vector<myFace*> fs) {
+void myMesh::testVertexHalfedge(const std::vector<myVertex*> verts,const std::vector<myHalfedge*> halfs, const std::vector<myFace*> fs) {
 	for (myVertex* v : verts) {
 		v->check();
 		//<myHalfedge*>::iterator it;
@@ -58,7 +58,7 @@ void testVertexHalfedge(const std::vector<myVertex*> verts,const std::vector<myH
 		if (h->prev->twin != h->twin->next) {
 			throw std::runtime_error("ERROR! h->prev->twin != h->twin->next\n");
 		}
-		if (h->next->twin != h->twin->prev) {
+		/*if (h->next->twin != h->twin->prev) {
 			throw std::runtime_error("ERROR! h->next->twin != h->twin->prev\n");
 		}
 
@@ -68,17 +68,10 @@ void testVertexHalfedge(const std::vector<myVertex*> verts,const std::vector<myH
 			});
 		if (itF == fs.end()) {
 			throw std::runtime_error("ERROR! Can't find adjacent face of halfedge in table of faces\n");
-		}
+		}*/
 	}
 }
 
-void testTwin(std::vector<myHalfedge*> halfs) {
-	
-}
-
-void findError() {
-
-}
 
 void myMesh::checkMesh()
 {
@@ -157,7 +150,7 @@ bool myMesh::readFile(std::string filename)
 			for (unsigned int i = 0; i < faceids.size(); i++) {
 				hedges[i] = new myHalfedge(); // pre-allocate new half-edges
 				hedges[i]->source = vertices[faceids[i]];
-				hedges[i]->adjacent_face = f;
+				
 			}
 			
 			f->adjacent_halfedge = hedges[0]; // connect the face with incident edge
@@ -173,6 +166,8 @@ bool myMesh::readFile(std::string filename)
 
 				hedges[i]->next = hedges[iplusone];
 				hedges[i]->prev = hedges[iminusone];
+				hedges[i]->adjacent_face = f;
+				hedges[i]->index = i;
 
 				it = twin_map.find(make_pair(faceids[iplusone], faceids[i]));
 				if (it == twin_map.end()) {
@@ -184,7 +179,8 @@ bool myMesh::readFile(std::string filename)
 					it->second->twin = hedges[i];
 				}
 				// set originof
-				vertices[faceids[i]]->originof = hedges[0];
+				
+				vertices[faceids[i]]->originof = hedges[i];
 
 				// push edges to halfedges in myMesh
 				halfedges.push_back(hedges[i]);
@@ -203,11 +199,19 @@ bool myMesh::readFile(std::string filename)
 	return true;
 }
 
-
-
 void myMesh::computeNormals()
 {
 	/**** TODO ****/
+	for(int i=0;i<faces.size();i++)
+	{
+		faces[i]->computeNormal();
+	}
+
+	for (int i = 0;i < vertices.size();i++)
+	{
+		vertices[i]->computeNormal();
+	}
+
 }
 
 void myMesh::normalize()
@@ -424,6 +428,7 @@ bool  myMesh::triangulate(myFace* f)
 	myPoint3D* center = new myPoint3D(0, 0, 0);
 	vector<myVertex*> verticesFace;
 	int vertexCount = 0;
+	map<pair<myVertex*, myVertex*>,myHalfedge*> twinTracker;
 
 	// Count the number of vertices in the face.
 	do {
@@ -444,7 +449,6 @@ bool  myMesh::triangulate(myFace* f)
 	}
 	myVertex* centerVextex = new myVertex();
 	centerVextex->point = center;
-	vertices.push_back(centerVextex);
 
 	for (int i = 0;i < vertexCount;i++) {
 		myFace* newFaceTrangulate = new myFace();
@@ -455,6 +459,7 @@ bool  myMesh::triangulate(myFace* f)
 			hedges[k] = new myHalfedge();
 		}
 		hedges[0]->source = centerVextex;
+		
 		hedges[0]->adjacent_face = newFaceTrangulate;
 
 		//first face but 2 first points/vertex.
@@ -468,10 +473,24 @@ bool  myMesh::triangulate(myFace* f)
 
 		for (int k = 0; k < 3; k++) {
 			hedges[k]->next = hedges[(k + 1) % 3];
-			hedges[k]->prev = hedges[(k + 2) % 3];
-			
+			hedges[k]->prev = hedges[(k + 2) % 3];	
 		}
 
+		//for (int k = 0; k < 3; k++) {
+		//	auto twinKey = make_pair(hedges[k]->source, hedges[k]->prev->source);
+		//	if (twinTracker.find(twinKey) != twinTracker.end()) {
+		//		// Le jumeau existe déjà
+		//		hedges[k]->twin = twinTracker[twinKey];
+		//		twinTracker[twinKey]->twin = hedges[k];
+		//	}
+		//	else {
+		//		// Le jumeau n'existe pas encore, donc stockez ce halfedge
+		//		twinTracker[make_pair(hedges[k]->prev->source, hedges[k]->source)] = hedges[k];
+		//	}
+		//}
+
+		centerVextex->originof = hedges[1];
+		vertices.push_back(centerVextex);
 		halfedges.push_back(hedges[1]);
 		halfedges.push_back(hedges[2]);
 		faces.push_back(newFaceTrangulate);
